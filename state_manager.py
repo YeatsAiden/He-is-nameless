@@ -43,12 +43,12 @@ class State:
         self.state.event_loop()
 
 
-    def update(self, dt):
-        self.state.update(dt)
+    def update(self, surf, dt):
+        self.state.update(surf, dt)
 
 
-    def draw(self, surface):
-        self.state.draw(surface)
+    def draw(self, surf):
+        self.state.draw(surf)
 
 
     def run(self, window):
@@ -56,6 +56,7 @@ class State:
             dt = self.clock.tick(FPS)/1000
             self.switch_state()
             self.event_loop()
-            self.update(dt)
+            self.update(window, dt)
             self.draw(window)
             pg.display.update()
+            # self.clock.tick(self.fps)

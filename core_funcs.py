@@ -22,7 +22,7 @@ def get_dir_names(dir_path):
     for path in os.listdir(dir_path):
         if os.path.isdir(os.path.join(dir_path, path)):
             files.append(path)
-    return files
+    return sorted(files)
 
 
 # Event loop decorator function

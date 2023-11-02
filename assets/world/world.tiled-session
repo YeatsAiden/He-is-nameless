@@ -6,14 +6,15 @@
     "activeFile": "world.tmx",
     "automapping.whileDrawing": true,
     "expandedProjectPaths": [
+        "Rules"
     ],
     "fileStates": {
         "Rules/tile_rules.tmx": {
             "scale": 3,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 193.16666666666669,
-                "y": 147.33333333333334
+                "x": 400,
+                "y": 399.8333333333333
             }
         },
         "ground.tsx": {
@@ -22,10 +23,10 @@
         },
         "world.tmx": {
             "scale": 3,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 259.1666666666667,
-                "y": 131.66666666666663
+                "x": 400,
+                "y": 399.8333333333333
             }
         }
     },
@@ -38,14 +39,14 @@
     "map.tileWidth": 16,
     "map.width": 50,
     "openFiles": [
-        "world.tmx",
         "ground.tsx",
+        "world.tmx",
         "Rules/tile_rules.tmx"
     ],
     "project": "world.tiled-project",
     "recentFiles": [
-        "Rules/tile_rules.tmx",
         "ground.tsx",
+        "Rules/tile_rules.tmx",
         "world.tmx"
     ],
     "tileset.lastUsedFormat": "tsx"

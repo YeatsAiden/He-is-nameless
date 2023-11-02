@@ -4,103 +4,94 @@ from core_funcs import *
 
 # Note "YoU CAn ONlY InDEnT YoUR CoDE 4 TiMeS" :p
 class Load_map:
-    def __init__(self, world_info_path):
-        with open(world_info_path) as f:
-            self.world_json_data = json.load(f)
-            print(self.world_json_data)
+    def __init__(self, levels_dir):
+        self.level_paths = [path for path in get_file_names(levels_dir) if path.split('.')[1] == 'json']
+        self.levels = {}
+        for path in self.level_paths:
+            with open(levels_dir + '/' + path) as f:
+                self.level_json_data = json.load(f)
+                self.levels[path.split(".")[0]] = [layer for layer in self.level_json_data["layers"]]
+                self.tile_size = self.level_json_data["tilewidth"]
 
         self.tile_set_img = pg.image.load("assets/tileset/tile_set.png").convert_alpha()
-        self.world_rects = []
         self.images_dict = self.make_image_dict(self.tile_set_img)
 
 
-    def make_rects_array(self, offset, areas_in_layers_to_be_rendered):
+    def make_rects_array(self, layers, offset):
         array = []
-        for layer_name, layer in areas_in_layers_to_be_rendered:
-            y = 0
-            for row in layer:
-                x = 0
-                for tile in row:
-                    if tile != -1 and layer_name in COLLISION_LAYERS:
-                        rect = pg.FRect((x + offset[0]) * TILE_SIZE - TILE_SIZE, (y + offset[1]) * TILE_SIZE - TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                        array.append(rect)
-                    x += 1
-                y += 1
+        collision_layer = {}
+
+        for layer in layers:
+            if layer["name"] == "middle_ground":
+                collision_layer = layer 
+
+        y = 1
+        for row in collision_layer["data"]:
+            x = 1
+            for tile in row:
+                if tile != 0:
+                    rect = pg.FRect((x + offset[0]) * self.tile_size - self.tile_size, (y + offset[1]) * self.tile_size - self.tile_size, self.tile_size, self.tile_size)
+                    array.append(rect)
+                x += 1
+            y += 1
 
         return array
+    
     
     def make_image_dict(self, tile_set_img):
         # Find out yourself :\, I already forgor how it works
         tile_imgs = {}
-        for y in range(0, tile_set_img.get_height(), TILE_SIZE):
-            for x in range(0, tile_set_img.get_width(), TILE_SIZE):
-                img = clip_img(tile_set_img, x, y, TILE_SIZE, TILE_SIZE)
+        for y in range(0, tile_set_img.get_height(), self.tile_size):
+            for x in range(0, tile_set_img.get_width(), self.tile_size):
+                img = clip_img(tile_set_img, x, y, self.tile_size, self.tile_size)
 
                 if self.check_if_sprite_is_not_transparent(img):
-                    tile_imgs[y//TILE_SIZE * tile_set_img.get_width()//TILE_SIZE + x//TILE_SIZE] = img
+                    tile_imgs[y//self.tile_size * tile_set_img.get_width()//self.tile_size + x//self.tile_size] = img
         
         return tile_imgs
 
 
     def check_if_sprite_is_not_transparent(self, surf):
-        # I think anyone would understand what this does -_-
         for y in range(0, surf.get_height()):
             for x in range(0, surf.get_width()):
                 color = surf.get_at((x, y))
-
                 if color[3] > 0:
                     return True
         return False
 
 
-    def get_areas_for_rendering(self, surf, cam_pos, world_csv_data):
-        # More stuff, not really interesting ...
-        layers = []
-        for layer_name, csv_data in world_csv_data:
-            starting_row = int(cam_pos[1] // TILE_SIZE) if cam_pos[1] > 0 else 0 
-            ending_row = int((cam_pos[1] + surf.get_height()) // TILE_SIZE) + 1 if cam_pos[1] > 0 else surf.get_height() // TILE_SIZE
-            starting_column = int(cam_pos[0] // TILE_SIZE)if cam_pos[0] > 0 else 0 
-            ending_column = int((cam_pos[0] + surf.get_width()) // TILE_SIZE) + 1 if cam_pos[0] > 0 else surf.get_width() // TILE_SIZE
+    def get_area(self, surf, cam_pos, layers):
+        # This finds the area on the map that will be rendered using your camera
+        areas = []
 
-            area = csv_data.iloc[starting_row:ending_row, starting_column:ending_column]
-            layers.append([layer_name, area.values])
+        start_row = int(cam_pos[1] // self.tile_size) if cam_pos[1] > 0 else 0 
+        end_row = int((cam_pos[1] + surf.get_height()) // self.tile_size) + 1 if cam_pos[1] > 0 else surf.get_height() // self.tile_size
+        start_col = int(cam_pos[0] // self.tile_size) if cam_pos[0] > 0 else 0 
+        end_col = int((cam_pos[0] + surf.get_width()) // self.tile_size) + 1 if cam_pos[0] > 0 else surf.get_width() // self.tile_size
 
-            offset_area = csv_data.iloc[0:starting_row + 1, 0:starting_column + 1].values
-            offset = [len(offset_area[0]), len(offset_area)]
+        col_num = end_col - start_col
+        row_num = end_row - start_row
 
-        return layers, offset
-    
+        start_index = start_row * layers[0]["width"] + start_col
+        end_index = min(start_index + col_num, start_index + layers[0]["width"] - start_col)
 
-    def get_all_spawn_positions(self, world_csv_data, spawn_layer_name):
-        positions = []
-        for layer_name, csv_data in world_csv_data:
-            if layer_name == spawn_layer_name:
-                y = 0
-                for index, row in csv_data.iterrows():
-                    x = 0
-                    for tile in row:
-                        if tile != -1:
-                            positions.append([pg.Vector2(x * TILE_SIZE + TILE_SIZE/2, y * TILE_SIZE + TILE_SIZE/2), self.decide_spawn(self.images_dict[tile])])
-                        x += 1
-                    y += 1 
-        
-        return positions
-    
+        for layer in layers:
+            areas.append({
+                "data": [layer["data"][start_index + i * layer["width"] : end_index + i * layer["width"]] for i in range(row_num)],
+                "name": layer["name"],
+                })
 
-    def make_world_image(self, areas_in_layers_to_be_rendered):
-        # Kinda CRINGE
-        img = pg.Surface((len(areas_in_layers_to_be_rendered[0][1][0]) * TILE_SIZE, len(areas_in_layers_to_be_rendered[0][1]) * TILE_SIZE))
-        for layer_name, layer in areas_in_layers_to_be_rendered:
+        return areas, [start_col, start_row]
+
+
+    def draw_level(self, surf, cam_pos, offset, layers):
+        for layer in layers:
             y = 0
-            for row in layer:
+            for row in layer["data"]:
                 x = 0
                 for tile in row:
-                    if tile != -1 and layer_name not in INVISIBLE_LAYERS:
-                        img.blit(self.images_dict[tile], (x * TILE_SIZE, y * TILE_SIZE))
+                    if tile != 0:
+                        surf.blit(self.images_dict[tile-1], (x * self.tile_size, y * self.tile_size) - cam_pos + [offset[0] * self.tile_size, offset[1] * self.tile_size])
                     x += 1
-                y += 1 
-        return img
+                y += 1
 
-
-    def draw_world(self, surf, cam_pos, offset, areas_in_layers_to_be_rendered):
-        surf.blit(self.make_world_image(areas_in_layers_to_be_rendered), (0, 0) - cam_pos + [offset[0] * TILE_SIZE, offset[1] * TILE_SIZE] - [TILE_SIZE, TILE_SIZE])

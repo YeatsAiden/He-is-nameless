@@ -136,7 +136,7 @@ class Button:
         # return if clicked
         return click
 
-    def draw(self, surface):
-        surface.blit(self.image, (self.rect.x, self.rect.y))
+    def draw(self, surf):
+        surf.blit(self.image, (self.rect.x, self.rect.y))
 
         

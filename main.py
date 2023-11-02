@@ -1,7 +1,5 @@
-# Game_state -> game -> gamestates -> cutscene -> ecs
 from settings import *
 from state_manager import State
-from core_funcs import *
 
 pg.init()
 

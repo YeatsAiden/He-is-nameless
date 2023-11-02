@@ -1,5 +1,4 @@
 from settings import *
-from core_funcs import *
 from .base_state import Base_state
 from ui import *
 
@@ -20,7 +19,7 @@ class Main_menu(Base_state):
             if event.type == pg.QUIT:
                 self.quit = True
 
-    def update(self, dt):
+    def update(self, surf, dt):
         if self.play_button.check_click():
             self.done = True
             self.next_state = "game"
